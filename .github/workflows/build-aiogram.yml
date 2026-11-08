@@ -10,6 +10,9 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 360
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
       - name: Checkout source and submodules
         uses: actions/checkout@v4
@@ -37,9 +40,23 @@ jobs:
       - name: Accept Android SDK licenses and install SDK packages
         shell: bash
         run: |
-          set -o pipefail
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+          set -e
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::Android sdkmanager was not found under $ANDROID_HOME/cmdline-tools"
+            find "$ANDROID_HOME" -maxdepth 4 -type f -name sdkmanager -print || true
+            exit 1
+          fi
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          set +e
+          yes | "$SDKMANAGER" --licenses
+          SDK_STATUS=${PIPESTATUS[1]}
+          set -e
+          if [ "$SDK_STATUS" -ne 0 ]; then
+            exit "$SDK_STATUS"
+          fi
+          "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Install native build tools
         run: |
@@ -52,10 +69,9 @@ jobs:
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_HASH: ${{ secrets.APP_HASH }}
+          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/27.2.12479018
           GRADLE_OPTS: -Xmx5g -XX:MaxMetaspaceSize=1g
         run: |
-          export ANDROID_SDK_ROOT="$ANDROID_HOME"
-          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
           chmod +x gradlew
           ./gradlew --no-daemon -PAPP_ID="$APP_ID" -PAPP_HASH="$APP_HASH" assembleAfatRelease
 
