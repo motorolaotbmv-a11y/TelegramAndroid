@@ -37,6 +37,11 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
       - name: Accept Android SDK licenses and install SDK packages
         shell: bash
         run: |
@@ -61,9 +66,7 @@ jobs:
       - name: Install native build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build nasm yasm meson gperf pkg-config golang-go rustup
-          rustup default stable
-          rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+          sudo apt-get install -y cmake ninja-build nasm yasm meson gperf pkg-config golang-go
 
       - name: Build AIOGRAM
         env:
