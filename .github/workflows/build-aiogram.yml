@@ -47,12 +47,12 @@ jobs:
 
       - name: Build AIOGRAM
         env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
           APP_ID: ${{ secrets.APP_ID }}
           APP_HASH: ${{ secrets.APP_HASH }}
           GRADLE_OPTS: -Xmx5g -XX:MaxMetaspaceSize=1g
         run: |
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
           chmod +x gradlew
           ./gradlew --no-daemon -PAPP_ID="$APP_ID" -PAPP_HASH="$APP_HASH" assembleAfatRelease
 
