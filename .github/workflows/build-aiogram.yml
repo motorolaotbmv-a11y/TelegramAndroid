@@ -1,0 +1,65 @@
+name: Build AIOGRAM APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout source and submodules
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          submodules: recursive
+
+      - name: Check Telegram API credentials
+        shell: bash
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_HASH: ${{ secrets.APP_HASH }}
+        run: |
+          if [ -z "$APP_ID" ] || [ -z "$APP_HASH" ]; then
+            echo "::error::Add APP_ID and APP_HASH in Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install native build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build nasm yasm meson gperf pkg-config golang-go rustup
+          rustup default stable
+          rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
+
+      - name: Build AIOGRAM
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_HASH: ${{ secrets.APP_HASH }}
+          GRADLE_OPTS: -Xmx5g -XX:MaxMetaspaceSize=1g
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon -PAPP_ID="$APP_ID" -PAPP_HASH="$APP_HASH" assembleAfatRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIOGRAM-APK
+          path: TMessagesProj_App/build/outputs/apk/afat/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
