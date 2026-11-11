@@ -17,19 +17,8 @@ jobs:
       - name: Checkout source and submodules
         uses: actions/checkout@v4
         with:
-          ref: dev
+          ref: aiogram-adapter
           submodules: recursive
-
-      - name: Check Telegram API credentials
-        shell: bash
-        env:
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_HASH: ${{ secrets.APP_HASH }}
-        run: |
-          if [ -z "$APP_ID" ] || [ -z "$APP_HASH" ]; then
-            echo "::error::Add APP_ID and APP_HASH in Settings > Secrets and variables > Actions"
-            exit 1
-          fi
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -75,8 +64,8 @@ jobs:
 
       - name: Build AIOGRAM
         env:
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_HASH: ${{ secrets.APP_HASH }}
+          APP_ID: 0
+          APP_HASH: 0
           ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/27.2.12479018
           GRADLE_OPTS: -Xmx5g -XX:MaxMetaspaceSize=1g
         run: |
