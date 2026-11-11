@@ -84,6 +84,7 @@ public final class AIOGRAMActivity extends Activity {
     }
 
     private void showLogin() {
+        codeSent = false;
         activeChatId = null;
         handler.removeCallbacks(refreshRunnable);
         root = baseColumn();
