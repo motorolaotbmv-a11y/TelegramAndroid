@@ -463,7 +463,7 @@ public final class AIOGRAMActivity extends Activity {
 
     private EditText input(String hint, int type) {
         EditText edit = new EditText(this);
-        edit.setSingleLine(type != (InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE));
+        edit.setSingleLine((type & InputType.TYPE_TEXT_FLAG_MULTI_LINE) == 0);
         edit.setInputType(type);
         edit.setTextColor(TEXT);
         edit.setHintTextColor(MUTED);
